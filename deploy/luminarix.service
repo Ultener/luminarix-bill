@@ -1,0 +1,25 @@
+[Unit]
+Description=Luminarix Hosting Panel
+Documentation=https://github.com/luminarix
+After=network.target
+
+[Service]
+Type=simple
+User=root
+WorkingDirectory=/opt/luminarix
+ExecStart=/usr/bin/node server.js
+Restart=always
+RestartSec=5
+Environment=NODE_ENV=production
+Environment=PORT=3000
+
+# Лимиты
+LimitNOFILE=65536
+
+# Логи
+StandardOutput=journal
+StandardError=journal
+SyslogIdentifier=luminarix
+
+[Install]
+WantedBy=multi-user.target
