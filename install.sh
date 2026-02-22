@@ -14,9 +14,8 @@ BLUE='\033[0;34m'
 CYAN='\033[0;36m'
 PURPLE='\033[0;35m'
 WHITE='\033[1;37m'
-NC='\033[0m' # No Color
+NC='\033[0m'
 
-# Функция для отображения заголовка
 show_header() {
     clear
     echo ""
@@ -26,7 +25,6 @@ show_header() {
     echo ""
 }
 
-# Функция для проверки root
 check_root() {
     if [ "$EUID" -ne 0 ]; then
         echo -e "${RED}❌ Запустите скрипт от root: sudo bash install.sh${NC}"
@@ -34,27 +32,22 @@ check_root() {
     fi
 }
 
-# Функция установки панели
 install_panel() {
     show_header
     echo -e "${BLUE}▶ НАЧАЛО УСТАНОВКИ ПАНЕЛИ${NC}"
     echo -e "${CYAN}───────────────────────────────────────────────────────${NC}"
     echo ""
 
-    # ── Шаг 1: Обновление системы ──
     echo -e "${BLUE}[1/9]${NC} Обновление системы..."
     apt update -qq && apt upgrade -y -qq > /dev/null 2>&1
     echo -e "${GREEN}  ✓ Система обновлена${NC}"
 
-    # ── Шаг 2: Установка зависимостей ──
     echo -e "${BLUE}[2/9]${NC} Установка зависимостей..."
     apt install -y -qq curl wget git nano ufw nginx > /dev/null 2>&1
     echo -e "${GREEN}  ✓ Зависимости установлены${NC}"
 
-    # ── Шаг 3: Подготовка директории ──
     echo -e "${BLUE}[3/9]${NC} Подготовка директории /opt/luminarix..."
 
-    # Создаем бэкап если папка уже существует
     if [ -d "/opt/luminarix" ]; then
         BACKUP_NAME="/opt/luminarix_backup_$(date +%Y%m%d_%H%M%S)"
         mv /opt/luminarix "$BACKUP_NAME"
@@ -64,7 +57,6 @@ install_panel() {
     mkdir -p /opt/luminarix
     echo -e "${GREEN}  ✓ Директория создана${NC}"
 
-    # ── Шаг 4: Скачивание репозитория ──
     echo -e "${BLUE}[4/9]${NC} Скачивание репозитория..."
     TEMP_DIR=$(mktemp -d)
     cd "$TEMP_DIR"
@@ -77,13 +69,11 @@ install_panel() {
         exit 1
     fi
 
-    # ── Шаг 5: Копирование файлов ──
     echo -e "${BLUE}[5/9]${NC} Копирование файлов..."
     cp -r ./* /opt/luminarix/ 2>/dev/null || cp -r . /opt/luminarix/
     rm -rf "$TEMP_DIR"
     echo -e "${GREEN}  ✓ Файлы скопированы в /opt/luminarix${NC}"
 
-    # ── Шаг 6: Установка Node.js ──
     echo -e "${BLUE}[6/9]${NC} Установка Node.js 20.x..."
     if command -v node &> /dev/null; then
         NODE_VER=$(node -v)
@@ -94,7 +84,6 @@ install_panel() {
         echo -e "${GREEN}  ✓ Node.js $(node -v) установлен${NC}"
     fi
 
-    # ── Шаг 7: Проверка и запуск install.sh ──
     echo -e "${BLUE}[7/9]${NC} Запуск скрипта установки..."
     cd /opt/luminarix
 
@@ -118,7 +107,6 @@ install_panel() {
         fi
     fi
 
-    # ── Шаг 8: Настройка systemd сервиса ──
     echo -e "${BLUE}[8/9]${NC} Настройка автозапуска..."
 
     if [ ! -f "/etc/systemd/system/luminarix.service" ]; then
@@ -150,7 +138,6 @@ EOF
     systemctl start luminarix
     echo -e "${GREEN}  ✓ Сервис luminarix создан и запущен${NC}"
 
-    # ── Шаг 9: Настройка Nginx ──
     echo -e "${BLUE}[9/9]${NC} Настройка Nginx..."
 
     if [ -f "/opt/luminarix/deploy/nginx.conf" ]; then
@@ -181,7 +168,6 @@ EOF
     systemctl enable nginx > /dev/null 2>&1
     echo -e "${GREEN}  ✓ Nginx настроен${NC}"
 
-    # ── Настройка фаервола ──
     echo -e "${BLUE}[*]${NC} Настройка фаервола..."
     ufw allow 22 > /dev/null 2>&1
     ufw allow 80 > /dev/null 2>&1
@@ -189,7 +175,6 @@ EOF
     ufw --force enable > /dev/null 2>&1
     echo -e "${GREEN}  ✓ Фаервол настроен${NC}"
 
-    # ── Проверка статуса ──
     echo -e "${BLUE}[*]${NC} Проверка сервисов..."
     sleep 3
     if systemctl is-active --quiet luminarix; then
@@ -198,10 +183,8 @@ EOF
         echo -e "${RED}  ❌ Сервис luminarix не работает${NC}"
     fi
 
-    # ── Получение IP ──
     SERVER_IP=$(curl -s ifconfig.me 2>/dev/null || curl -s icanhazip.com 2>/dev/null || echo "ВАШ_IP")
 
-    # ── Готово ──
     echo ""
     echo -e "${CYAN}═══════════════════════════════════════════════════════════════${NC}"
     echo -e "${GREEN}  ✅ Установка Luminarix Bill завершена!${NC}"
@@ -217,14 +200,12 @@ EOF
     echo ""
 }
 
-# Функция удаления панели
 uninstall_panel() {
     show_header
     echo -e "${RED}▶ УДАЛЕНИЕ ПАНЕЛИ${NC}"
     echo -e "${CYAN}───────────────────────────────────────────────────────${NC}"
     echo ""
     
-    # Проверяем существует ли панель
     if [ ! -d "/opt/luminarix" ]; then
         echo -e "${YELLOW}⚠ Панель не установлена (директория /opt/luminarix не найдена)${NC}"
         echo ""
@@ -275,14 +256,12 @@ uninstall_panel() {
     read -p "Нажмите Enter для возврата в меню..."
 }
 
-# Функция обновления панели
 update_panel() {
     show_header
     echo -e "${PURPLE}▶ ОБНОВЛЕНИЕ ПАНЕЛИ${NC}"
     echo -e "${CYAN}───────────────────────────────────────────────────────${NC}"
     echo ""
     
-    # Проверяем существует ли панель
     if [ ! -d "/opt/luminarix" ]; then
         echo -e "${YELLOW}⚠ Панель не установлена. Сначала выполните установку.${NC}"
         echo ""
@@ -350,11 +329,9 @@ update_panel() {
     read -p "Нажмите Enter для возврата в меню..."
 }
 
-# Функция отображения меню
 show_menu() {
     show_header
     
-    # Проверяем статус установки
     if [ -d "/opt/luminarix" ]; then
         PANEL_STATUS="${GREEN}✅ УСТАНОВЛЕНА${NC}"
         if systemctl is-active --quiet luminarix; then
@@ -382,7 +359,6 @@ show_menu() {
     read choice
 }
 
-# Основной цикл программы
 main() {
     check_root
     
